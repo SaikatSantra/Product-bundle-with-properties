@@ -1,0 +1,83 @@
+{% comment %}
+Set the extension of your color files below. Use 'png', 'jpeg', 'jpg' or 'gif'.
+{% endcomment %}
+<style>
+  .sswatch-element.color {
+  position: relative;
+  margin: 0px 8px 8px 0;
+  transform: translateZ(0);
+  min-width: 40px;
+  border: #e2e2e2 1px solid;
+  padding: 3px;
+}
+</style>
+{%- assign file_extension = 'png' -%}
+{%- assign swatch = option -%}
+{%- assign found_option = false -%}
+{%- assign is_color = false -%}
+{%- assign option_index = 0 -%}
+
+{% for option in frame_product.options %}
+  {% if option == swatch %}
+    {%- assign found_option = true -%}
+    {%- assign option_index = forloop.index0 -%}
+    {%- assign downcased_option = swatch | downcase -%}
+
+    {% if downcased_option contains 'color' or downcased_option contains 'colour' or downcased_option contains 'framing options' %}
+      {%- assign is_color = true -%}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+  <script>
+    console.log({{ frame_product | json }}) 
+    </script>
+<div class="swatch is-flex is-flex-wrap" data-option-indexxx="{{ option_index }}">
+  <div class="option_title">{{ frame_product.title }}</div>
+
+  {%- assign values = '' -%}
+
+  {% for frame_variant in frame_product.variants %}
+    {%- assign value = frame_variant.options[option_index] | escape -%}
+    {% unless values contains value %}
+      {%- assign values = values | join: ',' -%}
+      {%- assign values = values | append: ',' | append: value -%}
+      {%- assign values = values | split: ',' -%}
+      <input id="sswatch-{{ option_index }}-{{ value | replace: ' ', '-' }}-{{ frame_product.id }}{% if section.id %}-{{ section.id }}{% endif %}" type="radio" 
+       name="id" class="frame_variant"   
+        aria-label="{{ value | escape }}" tabindex="0" 
+        value="{{ frame_variant.id }}" {% if forloop.first %} checked{% endif %} />
+      <div tabindex="0" data-available="{{ frame_variant.available }}" value="{{ value | escape }}" data-value="{{ value | escape }}" data-id="{{ frame_variant.id }}" class="swatch-element color {{ value | handle }}-swatch 
+        {% if frame_variant.available %} available {% else %} soldout {% endif %}">
+        <div class="tooltip">{{ value }}</div>
+        {% assign swatch_img_url = value | handle | append: '.' | append: file_extension | asset_img_url: '50x' | prepend: 'https:' %}
+        {% assign swatch_img_url = frame_variant.featured_image | img_url: '500x' %}
+        <label {% if frame_variant.featured_image %}data-image="{{ frame_variant.featured_image | product_img_url: '600x' }}"{% endif %} aria-label="{{ value }}"
+          for="sswatch-{{ option_index }}-{{ value | replace: ' ', '-' }}-{{ frame_product.id }}{% if section.id %}-{{ section.id }}{% endif %}" 
+          style="background-image: url({{ swatch_img_url }}); background-color: {{ value | split: ' ' | last | handle }};">
+         {% unless frame_variant.available %} <img class="crossed-out" src="{{ 'soldout.png' | asset_url }}" aria-label="sold out" alt="sold out"/> {% endunless %}
+        </label>
+      </div>
+      
+      
+    {% comment %} input variant: name="items[][id]"
+    input quantity: name="items[][quantity]"
+    input property: name="items[][properties][property_label]" {% endcomment %}
+    {% endunless %}
+  {% endfor %}
+</div>
+
+<script>
+  // JavaScript to handle radio button changes
+  document.querySelectorAll('input[type="radio"].frame_variant').forEach(radio => {
+    radio.addEventListener('change', function () {
+      console.log(this)
+      console.log(this.getAttribute('aria-label'));
+      // Get the data-info attribute from the selected radio button
+      const selectedData = this.getAttribute('aria-label');
+      
+      // Update the content of the data-display container
+      document.getElementById('frame_for').value = selectedData;
+    });
+  });
+</script>
