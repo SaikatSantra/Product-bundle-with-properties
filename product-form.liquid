@@ -1,0 +1,90 @@
+<form method="post" action="/cart/add" id="product_form_{{product.id}}" accept-charset="UTF-8" class="shopify-product-form" enctype="multipart/form-data">
+    
+
+    <div class="
+      select
+      {% if product.has_only_default_variant %}default_select{% endif %}
+    ">
+
+      {% if product.options.size == 1 and settings.product_form_style == 'select' %}
+        <label>{{ product.options[0] }}</label>
+      {% endif %}
+
+      <select
+        id="product-select-{{ product.id }}{{ product-form }}{{ section.id }}{{ block.id }}"
+       {% if frame_product %} name="items[][id]" {% else %} name="id" {% endif %}        
+        class="{% if product.options.size > 1 %}multi_select{% endif %}"
+        data-variants>
+        {% for v in product.variants %}
+          <option
+            {% if v == variant %}
+            selected="selected"
+            {% endif %}
+            value="{{ v.id }}"
+            data-featured-image="{{ v.featured_media }}"
+            data-image="{{ v.featured_media | product_img_url: '600x' }}"
+            data-sku="{{ v.sku }}">{{ v.title }}</option>
+        {% endfor %}
+      </select>
+  
+     
+    </div>
+
+    <input id="frame_for" type="hidden"  name="items[][properties][Frame]" value="{{ frame_product.selected_or_first_available_variant.title }}">
+
+    {% if settings.product_form_style == "radio" and product.variants.size > 1 or settings.product_form_style == "radio" and product.options[0] != "Title" %}
+      <div class="swatch_options">
+        {% for option in product.options %}
+          {% render 'product-swatch', option: option, product: product %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+  {% if product.metafields.custom.frame_product != blank %}
+  
+    {% if settings.product_form_style == "radio" and frame_product.variants.size > 1 or settings.product_form_style == "radio" and frame_product.options[0] != "Title" %}
+      <div class="swatch_options">
+        {% for option in frame_product.options %}{% endfor %}
+          {% render 'frame-swatch', option: option, frame_product: frame_product, product: product %}        
+      </div>
+    {% endif %}
+  {% endif %}
+    <div class="purchase-details__quantity product-quantity-box">
+          <label for="quantity">{{ 'products.product.quantity' | t }}</label>
+          <span class="ss-icon product-minus js-change-quantity" data-func="minus">
+            <span class="icon-minus"></span>
+          </span>
+          <input
+            type="number"
+            min="1"
+            size="2"
+            class="quantity"
+            {% if frame_product %}  name="items[][quantity]"  {% else %}  name="quantity" {% endif %}  
+            id="quantity"
+            value="1"
+            {% if settings.limit_quantity and variant.inventory_management != blank and variant.inventory_policy == "deny" %}
+            max="{{ variant.inventory_quantity }}"
+            {% endif %} />
+          <span class="ss-icon product-plus js-change-quantity" data-func="plus">
+            <span class="icon-plus"></span>
+          </span>
+        </div>
+      {% endif %}
+{% capture add_to_cart_label %}{% if collection_handles contains 'pre-order' %}{{ 'collections.general.pre_order' | t }}{% else %}{{ 'products.product.add_to_cart' | t }}{% endif %}{% endcapture %}
+      <button
+        type="{% if settings.cart_action == 'ajax' %}button{% else %}submit{% endif %}"
+        name="add"
+        class="add_to_cart global-button
+          {% if show_payment_button %} global-button--secondary {% else %} global-button--primary {% endif %}
+          {% if settings.cart_action == 'ajax' %}  ajax-submit {% endif %}
+          {% if product.available == false %} disabled {% endif %}"
+        data-label={{ add_to_cart_label | json }}>
+        <span class="text">
+          {% if product.available %}
+            {{ add_to_cart_label }}
+          {% else %}
+            {{ 'products.product.sold_out' | t }}{% endif %}
+        </span>
+      </button>
+
+  </form>
